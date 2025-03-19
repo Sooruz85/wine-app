@@ -62,8 +62,8 @@ export default function About() {
       <div className="text-center mb-16">
         <h2 className="text-3xl font-bold mb-6">Notre Mission</h2>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Rendre accessible l'excellence des grands vins français en proposant des expériences uniques
-          de dégustation et de découverte, tout en préservant l'authenticité et le prestige de chaque domaine.
+          Rendre accessible l&aposexcellence des grands vins français en proposant des expériences uniques
+          de dégustation et de découverte, tout en préservant l&aposauthenticité et le prestige de chaque domaine.
         </p>
       </div>
 

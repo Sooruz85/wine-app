@@ -64,7 +64,7 @@ const chateaux = [
     name: "Château de Beaucastel",
     region: "Rhône",
     description: "Domaine emblématique de Châteauneuf-du-Pape, connu pour ses assemblages complexes.",
-    image: "https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?auto=format&fit=crop&w=1920&q=80",
+    image: "/images/chateau-margaux.png",
     wines: [
       { id: 10, name: "Châteauneuf-du-Pape Rouge 2016", price: 120, type: "Rouge", rating: 97, stock: 24 },
       { id: 11, name: "Châteauneuf-du-Pape Blanc 2018", price: 95, type: "Blanc", rating: 94, stock: 18 },
@@ -76,8 +76,7 @@ const chateaux = [
     name: "Château d'Yquem",
     region: "Bordeaux",
     description: "Le plus prestigieux des vins liquoreux, unique Premier Cru Supérieur de Sauternes.",
-    image: "/images/chateau-yquem.png",
-        wines: [
+    image: "/images/chateau-yquem.png",    wines: [
       { id: 13, name: "Château d'Yquem 2015", price: 450, type: "Liquoreux", rating: 98, stock: 10 },
       { id: 14, name: "Y d'Yquem 2018", price: 180, type: "Blanc Sec", rating: 95, stock: 20 },
       { id: 15, name: "Château d'Yquem 2010", price: 800, type: "Liquoreux", rating: 100, stock: 5 }
