@@ -3,11 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Wine, User, ShoppingCart, Menu, X } from "lucide-react";
+import { Wine, User, ShoppingCart, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([
+    { id: 1, name: "Château Margaux 2015", price: 850, quantity: 1 },
+    { id: 2, name: "Pavillon Rouge 2018", price: 280, quantity: 2 },
+  ]);
 
   const navigation = [
     { name: "Accueil", href: "/" },
@@ -48,15 +53,6 @@ export default function Header() {
                     </Link>
                   ))}
                 </div>
-                <div className="py-6">
-                  <Link
-                    href="/login"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Se connecter
-                  </Link>
-                </div>
               </div>
             </div>
           </SheetContent>
@@ -76,11 +72,35 @@ export default function Header() {
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
-          <Link href="/cart">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-6 w-6" />
-            </Button>
-          </Link>
+          <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <ShoppingCart className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <h2 className="text-lg font-bold mb-4">Panier</h2>
+              {cartItems.length > 0 ? (
+                <ul className="space-y-4">
+                  {cartItems.map((item) => (
+                    <li key={item.id} className="flex justify-between border-b pb-2">
+                      <span>{item.name} (x{item.quantity})</span>
+                      <span>{item.price * item.quantity}€</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">Votre panier est vide.</p>
+              )}
+              <div className="mt-6 flex justify-between">
+                <Button onClick={() => setCartOpen(false)}>Fermer</Button>
+                <Link href="/checkout">
+                  <Button variant="default">Commander</Button>
+                </Link>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Link href="/login">
             <Button>
               <User className="mr-2 h-4 w-4" />
