@@ -76,8 +76,8 @@ const chateaux = [
     name: "Château d'Yquem",
     region: "Bordeaux",
     description: "Le plus prestigieux des vins liquoreux, unique Premier Cru Supérieur de Sauternes.",
-    image: "https://images.unsplash.com/photo-1506377585622-bedcbb5a8251?auto=format&fit=crop&w=1920&q=80",
-    wines: [
+    image: "/images/chateau-yquem.png",
+        wines: [
       { id: 13, name: "Château d'Yquem 2015", price: 450, type: "Liquoreux", rating: 98, stock: 10 },
       { id: 14, name: "Y d'Yquem 2018", price: 180, type: "Blanc Sec", rating: 95, stock: 20 },
       { id: 15, name: "Château d'Yquem 2010", price: 800, type: "Liquoreux", rating: 100, stock: 5 }
