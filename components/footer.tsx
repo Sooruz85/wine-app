@@ -12,10 +12,10 @@ export default function Footer() {
           <Link href="/contact" className="text-gray-500 hover:text-gray-600">
             Contact
           </Link>
-          <Link href="/privacy" className="text-gray-500 hover:text-gray-600">
+          <Link href="/confidentialite" className="text-gray-500 hover:text-gray-600">
             Confidentialité
           </Link>
-          <Link href="/terms" className="text-gray-500 hover:text-gray-600">
+          <Link href="/conditions" className="text-gray-500 hover:text-gray-600">
             Conditions
           </Link>
         </div>

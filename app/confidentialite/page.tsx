@@ -57,12 +57,12 @@ export default function Privacy() {
           Conformément au RGPD, vous disposez des droits suivants :
         </p>
         <ul className="list-disc pl-6 mb-4">
-          <li>Droit d'accès à vos données personnelles</li>
+          <li>Droit d&apos;accès à vos données personnelles</li>
           <li>Droit de rectification</li>
-          <li>Droit à l'effacement</li>
+          <li>Droit à l&apos;effacement</li>
           <li>Droit à la limitation du traitement</li>
           <li>Droit à la portabilité des données</li>
-          <li>Droit d'opposition</li>
+          <li>Droit d&apos;opposition</li>
         </ul>
       </section>
 

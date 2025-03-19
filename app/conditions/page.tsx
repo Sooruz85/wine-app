@@ -33,8 +33,8 @@ export default function Terms() {
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">3. Prix et Paiement</h2>
         <p>
-          Les prix sont indiqués en euros TTC. Le paiement s'effectue en ligne
-          par carte bancaire ou virement. La réservation n'est confirmée qu'après
+          Les prix sont indiqués en euros TTC. Le paiement s&apos;effectue en ligne
+          par carte bancaire ou virement. La réservation n&apos;est confirmée qu&apos;après
           réception du paiement intégral.
         </p>
       </section>
@@ -43,7 +43,7 @@ export default function Terms() {
         <h2 className="text-2xl font-semibold mb-4">4. Responsabilité</h2>
         <p>
           Grands Vins ne pourra être tenu responsable en cas de force majeure
-          ou d'événement indépendant de sa volonté perturbant l'organisation
+          ou d&apos;événement indépendant de sa volonté perturbant l&apos;organisation
           des visites.
         </p>
       </section>
@@ -51,8 +51,8 @@ export default function Terms() {
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">5. Propriété intellectuelle</h2>
         <p>
-          L'ensemble des éléments du site (textes, images, vidéos) sont protégés
-          par le droit d'auteur. Toute reproduction est strictement interdite
+          L&apos;ensemble des éléments du site (textes, images, vidéos) sont protégés
+          par le droit d&apos;auteur. Toute reproduction est strictement interdite
           sans autorisation préalable.
         </p>
       </section>
@@ -60,8 +60,8 @@ export default function Terms() {
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">6. Protection des données</h2>
         <p>
-          Les données personnelles collectées font l'objet d'un traitement
-          informatique. Conformément au RGPD, vous disposez d'un droit d'accès,
+          Les données personnelles collectées font l&apos;objet d&apos;un traitement
+          informatique. Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès,
           de rectification et de suppression de vos données.
         </p>
       </section>
