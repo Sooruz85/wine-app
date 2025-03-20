@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Wine, Calendar, Clock, Users, Euro } from "lucide-react";
+import { Wine, Calendar, Clock, Users, Euro, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -21,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 
 const experiences = [
   {
@@ -28,7 +37,8 @@ const experiences = [
     chateau: "Château Margaux",
     title: "Dégustation Prestige",
     description: "Une expérience exclusive incluant la dégustation de 3 millésimes prestigieux de Château Margaux.",
-    image: "/images/chateau-margaux.png",    duration: "2h30",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?auto=format&fit=crop&w=1920&q=80",
+    duration: "2h30",
     maxParticipants: 8,
     price: 350,
     type: "Dégustation",
@@ -53,7 +63,7 @@ const experiences = [
     chateau: "Château d'Yquem",
     title: "L'Art du Sauternes",
     description: "Immersion dans l'univers des vins liquoreux et dégustation verticale d'Yquem.",
-    image: "/images/chateau-yquem.png",
+    image: "https://images.unsplash.com/photo-1506377585622-bedcbb5a8251?auto=format&fit=crop&w=1920&q=80",
     duration: "2h",
     maxParticipants: 10,
     price: 300,
@@ -79,7 +89,8 @@ const experiences = [
     chateau: "Domaine Trimbach",
     title: "L'Excellence Alsacienne",
     description: "Visite privée des caves et dégustation des cuvées prestigieuses Clos Sainte Hune.",
-    image: "/images/trimbach.png",    duration: "2h",
+    image: "https://images.unsplash.com/photo-1589303669788-8685ea992ce6?auto=format&fit=crop&w=1920&q=80",
+    duration: "2h",
     maxParticipants: 8,
     price: 200,
     type: "Visite & Dégustation",
@@ -143,7 +154,8 @@ const experiences = [
     chateau: "Château Pontet-Canet",
     title: "Innovation & Tradition",
     description: "Découverte du travail des chevaux dans les vignes et des dernières innovations.",
-    image: "/images/chateau-pontetcanet.png",    duration: "3h",
+    image: "https://images.unsplash.com/photo-1519687079572-8a360e5d9f91?auto=format&fit=crop&w=1920&q=80",
+    duration: "3h",
     maxParticipants: 12,
     price: 180,
     type: "Visite technique",
@@ -157,6 +169,10 @@ export default function Reservations() {
   const [selectedType, setSelectedType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [selectedExperience, setSelectedExperience] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [participants, setParticipants] = useState(1);
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesSearch = exp.chateau.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -174,6 +190,32 @@ export default function Reservations() {
 
     return matchesSearch && matchesType && matchesLanguage && matchesPriceRange;
   });
+
+  const handleReservation = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("User not authenticated");
+        return;
+      }
+
+      const { error } = await supabase.from('cart_items').insert({
+        user_id: user.id,
+        reservation_id: selectedExperience.id,
+        quantity: participants,
+        total_price: selectedExperience.price * participants
+      });
+
+      if (error) throw error;
+
+      setIsDialogOpen(false);
+      alert("Ajouté au panier avec succès !");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -268,11 +310,87 @@ export default function Reservations() {
                 <span className="text-xl font-bold">{experience.price}€</span>
                 <span className="text-muted-foreground">par personne</span>
               </div>
-              <Button>Réserver</Button>
+              <Button onClick={() => {
+                setSelectedExperience(experience);
+                setIsDialogOpen(true);
+              }}>
+                Réserver
+              </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {selectedExperience && (
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{selectedExperience.title}</DialogTitle>
+              <DialogDescription>{selectedExperience.chateau}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="relative h-48 w-full">
+                <Image
+                  src={selectedExperience.image}
+                  alt={selectedExperience.title}
+                  fill
+                  className="object-cover rounded-md"
+                />
+              </div>
+              <div className="grid gap-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Date</span>
+                  <Select value={selectedDate} onValueChange={setSelectedDate}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Choisir une date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedExperience.availableDates.map((date: string) => (
+                        <SelectItem key={date} value={date}>
+                          {new Date(date).toLocaleDateString('fr-FR')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Participants</span>
+                  <Select
+                    value={participants.toString()}
+                    onValueChange={(value) => setParticipants(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Nombre de participants" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: selectedExperience.maxParticipants }, (_, i) => (
+                        <SelectItem key={i + 1} value={(i + 1).toString()}>
+                          {i + 1} {i + 1 === 1 ? 'personne' : 'personnes'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total</span>
+                  <span className="text-xl font-bold">
+                    {selectedExperience.price * participants}€
+                  </span>
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Retour
+              </Button>
+              <Button onClick={handleReservation} className="gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Ajouter au panier
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
