@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Wine, Calendar, Clock, Users, Euro, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -173,6 +173,8 @@ export default function Reservations() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [participants, setParticipants] = useState(1);
+  const [user, setUser] = useState<any>(null);
+
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesSearch = exp.chateau.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -216,6 +218,79 @@ export default function Reservations() {
     }
   };
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const addToCart = async () => {
+    if (!user) {
+      alert("Veuillez vous connecter avant d'ajouter au panier.");
+      return;
+    }
+
+    if (!selectedExperience || !selectedDate) {
+      alert("Veuillez sélectionner une date.");
+      return;
+    }
+
+    try {
+      // Vérifier si la réservation existe déjà
+      let { data: existingReservation, error: reservationError } = await supabase
+        .from("reservations")
+        .select("id")
+        .eq("id", selectedExperience.id)
+        .single();
+
+      // Si la réservation n'existe pas, l'ajouter
+      if (!existingReservation) {
+        const { data: newReservation, error: insertError } = await supabase
+          .from("reservations")
+          .insert([
+            {
+              id: selectedExperience.id, // Utilisation de l'ID existant
+              title: selectedExperience.title,
+              chateau: selectedExperience.chateau,
+              price: selectedExperience.price,
+            }
+          ])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        existingReservation = newReservation;
+      }
+
+      // Ajouter l'élément au panier
+      const { error: cartError } = await supabase.from("cart_items").insert([
+        {
+          user_id: user.id,
+          reservation_id: existingReservation.id,
+          date: selectedDate,
+          quantity: participants,
+          total_price: selectedExperience.price * participants,
+        }
+      ]);
+
+      if (cartError) throw cartError;
+
+      setIsDialogOpen(false);
+      alert("Ajouté au panier avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout au panier:", error);
+    }
+  };
 
 
   return (
@@ -381,14 +456,14 @@ export default function Reservations() {
               </div>
             </div>
             <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Retour
-              </Button>
-              <Button onClick={handleReservation} className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Ajouter au panier
-              </Button>
-            </DialogFooter>
+  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+    Retour
+  </Button>
+  <Button onClick={addToCart}>
+{/* ✅ Appel correct sans argument */}
+    Ajouter au panier
+  </Button>
+</DialogFooter>
           </DialogContent>
         )}
       </Dialog>

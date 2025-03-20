@@ -16,33 +16,61 @@ export default function Header() {
 
   useEffect(() => {
     const fetchCart = async () => {
+      if (!user) return;
       const { data, error } = await supabase
         .from("cart_items")
-        .select("id, quantity, total_price, reservations(title, chateau)");
+        .select("id, quantity, total_price, reservations(title, chateau)")
+        .eq("user_id", user.id);
 
-      if (error) console.error("Error fetching cart:", error);
+      if (error) console.error("Erreur lors de la récupération du panier:", error);
       else setCartItems(data);
     };
 
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      fetchCart();
     };
 
-    fetchCart();
     checkUser();
 
-    // ✅ Écouter les changements d'état d'authentification en temps réel
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      if (session?.user) fetchCart();
     });
 
     return () => listener?.subscription.unsubscribe();
-  }, []);
+  }, [user]);
+
+  // ✅ Fonction pour ajouter une réservation au panier
+  const addToCart = async (reservation: any) => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("cart_items")
+      .insert([{
+        user_id: user.id,
+        reservation_id: reservation.id,
+        quantity: 1,
+        total_price: reservation.price
+      }]);
+
+    if (error) {
+      console.error("Erreur lors de l'ajout au panier:", error);
+      return;
+    }
+
+    // Mettre à jour l'affichage du panier
+    setCartItems([...cartItems, { ...reservation, quantity: 1, total_price: reservation.price }]);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setCartItems([]); // Vider le panier à la déconnexion
   };
 
   return (
@@ -102,7 +130,7 @@ export default function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* ✅ Connexion / Déconnexion */}
+          {/* Connexion / Déconnexion */}
           {user ? (
             <Button variant="outline" onClick={handleLogout}>
               <User className="mr-2 h-4 w-4" />
@@ -117,7 +145,7 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* ✅ Affichage du pop-up d'authentification */}
+      {/* ✅ Pop-up d'authentification */}
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </header>
   );

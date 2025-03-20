@@ -28,7 +28,7 @@ const chateaux = [
     name: "Château Margaux",
     region: "Bordeaux",
     description: "Premier Grand Cru Classé en 1855, Château Margaux est l'un des domaines viticoles les plus prestigieux au monde.",
-    image: "https://images.unsplash.com/photo-1583803804313-cf4b9ecd674c?auto=format&fit=crop&w=1920&q=80",
+    image: "/images/chateau-margaux.png",
     wines: [
       { id: 1, name: "Château Margaux 2015", price: 850, type: "Rouge", rating: 98, stock: 12 },
       { id: 2, name: "Pavillon Rouge 2018", price: 280, type: "Rouge", rating: 94, stock: 24 },
