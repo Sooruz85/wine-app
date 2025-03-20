@@ -196,11 +196,11 @@ export default function Reservations() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.error("User not authenticated");
+        alert("Veuillez vous connecter avant d'ajouter au panier.");
         return;
       }
 
-      const { error } = await supabase.from('cart_items').insert({
+      const { error } = await supabase.from("cart_items").insert({
         user_id: user.id,
         reservation_id: selectedExperience.id,
         quantity: participants,
@@ -212,9 +212,10 @@ export default function Reservations() {
       setIsDialogOpen(false);
       alert("Ajouté au panier avec succès !");
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      console.error("Erreur lors de l'ajout au panier:", error);
     }
   };
+
 
 
   return (

@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Wine, User, ShoppingCart, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
+import Auth from "@/components/auth";
+
+
 
 export default function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -21,8 +26,19 @@ export default function Header() {
       else setCartItems(data);
     };
 
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
     fetchCart();
+    checkUser();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   return (
     <header className="border-b bg-white">
@@ -34,7 +50,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Desktop menu */}
+        {/* Menu desktop */}
         <div className="hidden lg:flex lg:gap-x-12">
           <Link href="/" className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary">
             Accueil
@@ -51,7 +67,7 @@ export default function Header() {
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
-          {/* Bouton panier */}
+          {/* Panier */}
           <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -81,15 +97,22 @@ export default function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Bouton connexion */}
-          <Link href="/login">
-            <Button>
+          {/* Connexion / Déconnexion */}
+          {user ? (
+            <Button variant="outline" onClick={handleLogout}>
+              <User className="mr-2 h-4 w-4" />
+              Se déconnecter
+            </Button>
+          ) : (
+            <Button onClick={() => setShowAuth(true)}>
               <User className="mr-2 h-4 w-4" />
               Se connecter
             </Button>
-          </Link>
+          )}
         </div>
       </nav>
+
+      {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </header>
   );
 }
