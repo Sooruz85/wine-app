@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Wine, User, ShoppingCart, Menu } from "lucide-react";
+import { Wine, User, ShoppingCart } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 import Auth from "@/components/auth";
-
-
 
 export default function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -33,6 +31,13 @@ export default function Header() {
 
     fetchCart();
     checkUser();
+
+    // ✅ Écouter les changements d'état d'authentification en temps réel
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => listener?.subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
@@ -97,11 +102,11 @@ export default function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Connexion / Déconnexion */}
+          {/* ✅ Connexion / Déconnexion */}
           {user ? (
             <Button variant="outline" onClick={handleLogout}>
               <User className="mr-2 h-4 w-4" />
-              Se déconnecter
+              Déconnexion
             </Button>
           ) : (
             <Button onClick={() => setShowAuth(true)}>
@@ -112,6 +117,7 @@ export default function Header() {
         </div>
       </nav>
 
+      {/* ✅ Affichage du pop-up d'authentification */}
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </header>
   );

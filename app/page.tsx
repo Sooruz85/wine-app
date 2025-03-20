@@ -16,19 +16,19 @@ const chateaux = [
   {
     id: 1,
     name: "Château Margaux",
-    image: "https://images.unsplash.com/photo-1583803804313-cf4b9ecd674c?auto=format&fit=crop&w=1920&q=80",
+    image: "/images/chateau-margaux.png",
     region: "Bordeaux",
   },
   {
     id: 2,
-    name: "Château Lafite Rothschild",
-    image: "https://images.unsplash.com/photo-1518097319834-d0b21b9f7603?auto=format&fit=crop&w=1920&q=80",
+    name: "Château Trimbach",
+    image: "/images/trimbach.png",
     region: "Bordeaux",
   },
   {
     id: 3,
     name: "Château d'Yquem",
-    image: "https://images.unsplash.com/photo-1615887147319-5e2f2175e917?auto=format&fit=crop&w=1920&q=80",
+    image: "/images/chateau-yquem.png",
     region: "Sauternes",
   },
   {
@@ -39,8 +39,8 @@ const chateaux = [
   },
   {
     id: 5,
-    name: "Château Latour",
-    image: "https://images.unsplash.com/photo-1560090932-778d0423d860?auto=format&fit=crop&w=1920&q=80",
+    name: "Château Pontet-Canet",
+    image: "/images/chateau-pontetcanet.png",
     region: "Bordeaux",
   },
 ];
