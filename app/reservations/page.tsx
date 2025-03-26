@@ -193,30 +193,6 @@ export default function Reservations() {
     return matchesSearch && matchesType && matchesLanguage && matchesPriceRange;
   });
 
-  const handleReservation = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert("Veuillez vous connecter avant d'ajouter au panier.");
-        return;
-      }
-
-      const { error } = await supabase.from("cart_items").insert({
-        user_id: user.id,
-        reservation_id: selectedExperience.id,
-        quantity: participants,
-        total_price: selectedExperience.price * participants
-      });
-
-      if (error) throw error;
-
-      setIsDialogOpen(false);
-      alert("Ajouté au panier avec succès !");
-    } catch (error) {
-      console.error("Erreur lors de l'ajout au panier:", error);
-    }
-  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -244,53 +220,81 @@ export default function Reservations() {
       return;
     }
 
+    const prixReservation = selectedExperience.price;
+    const prixTotal = prixReservation * participants;
+
     try {
-      // Vérifier si la réservation existe déjà
-      let { data: existingReservation, error: reservationError } = await supabase
+      // 1. Vérifie si la réservation existe dans la table
+      const { data: existingReservation } = await supabase
         .from("reservations")
         .select("id")
         .eq("id", selectedExperience.id)
-        .single();
+        .maybeSingle();
 
-      // Si la réservation n'existe pas, l'ajouter
+      // 2. Si pas trouvée, insère-la
       if (!existingReservation) {
-        const { data: newReservation, error: insertError } = await supabase
+        const { error: insertReservationError } = await supabase
           .from("reservations")
-          .insert([
-            {
-              id: selectedExperience.id, // Utilisation de l'ID existant
-              title: selectedExperience.title,
-              chateau: selectedExperience.chateau,
-              price: selectedExperience.price,
-            }
-          ])
-          .select()
-          .single();
+          .insert({
+            id: selectedExperience.id,
+            title: selectedExperience.title,
+            chateau: selectedExperience.chateau,
+            price: selectedExperience.price,
+            image: selectedExperience.image,
+            description: selectedExperience.description,
+            duration: selectedExperience.duration,
+            type: selectedExperience.type
+          });
 
-        if (insertError) throw insertError;
-
-        existingReservation = newReservation;
+        if (insertReservationError) throw insertReservationError;
       }
 
-      // Ajouter l'élément au panier
-      const { error: cartError } = await supabase.from("cart_items").insert([
-        {
-          user_id: user.id,
-          reservation_id: existingReservation.id,
-          date: selectedDate,
-          quantity: participants,
-          total_price: selectedExperience.price * participants,
-        }
-      ]);
+      // 3. Puis ajoute dans cart_items
+      const { data: existingItem, error: fetchError } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("reservation_id", selectedExperience.id)
+        .eq("date", selectedDate)
+        .maybeSingle();
 
-      if (cartError) throw cartError;
+      if (fetchError) throw fetchError;
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + participants;
+        const newTotalPrice = newQuantity * prixReservation;
+
+        const { error: updateError } = await supabase
+          .from("cart_items")
+          .update({
+            quantity: newQuantity,
+            total_price: newTotalPrice,
+          })
+          .eq("id", existingItem.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("cart_items")
+          .insert({
+            user_id: user.id,
+            reservation_id: selectedExperience.id,
+            date: selectedDate,
+            quantity: participants,
+            total_price: prixTotal,
+          });
+
+        if (insertError) throw insertError;
+      }
 
       setIsDialogOpen(false);
       alert("Ajouté au panier avec succès !");
     } catch (error) {
       console.error("Erreur lors de l'ajout au panier:", error);
+      alert("Une erreur est survenue lors de l'ajout au panier.");
     }
   };
+
 
 
   return (

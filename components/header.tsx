@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Wine, User, ShoppingCart } from "lucide-react";
+import { Wine, User, ShoppingCart, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 import Auth from "@/components/auth";
@@ -13,64 +14,105 @@ export default function Header() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [totalPrice, setTotalPrice] = useState(0);
 
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (!user) return;
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    const item = cartItems.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const unitPrice = item.total_price / item.quantity;
+    const newTotalPrice = unitPrice * newQuantity;
+
+    try {
+      const { error } = await supabase
+        .from("cart_items")
+        .update({
+          quantity: newQuantity,
+          total_price: newTotalPrice,
+        })
+        .eq("id", itemId);
+
+      if (error) throw error;
+      await fetchCart();
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour :", err);
+    }
+  };
+
+  const fetchCart = async () => {
+    if (!user) return;
+
+    try {
       const { data, error } = await supabase
         .from("cart_items")
-        .select("id, quantity, total_price, reservations(title, chateau)")
+        .select(`
+          id,
+          date,
+          quantity,
+          total_price,
+          reservation_id,
+          reservations (
+            id,
+            title,
+            chateau,
+            price,
+            image
+          )
+        `)
         .eq("user_id", user.id);
 
-      if (error) console.error("Erreur lors de la récupération du panier:", error);
-      else setCartItems(data);
-    };
+      if (error) throw error;
 
+      setCartItems(data || []);
+      const total = (data || []).reduce((sum, item) => sum + (item.total_price || 0), 0);
+      setTotalPrice(total);
+    } catch (error) {
+      console.error("Erreur lors de la récupération du panier:", error);
+    }
+  };
+
+  useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      fetchCart();
     };
 
     checkUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (session?.user) fetchCart();
     });
 
     return () => listener?.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchCart();
+    }
   }, [user]);
 
-  // ✅ Fonction pour ajouter une réservation au panier
-  const addToCart = async (reservation: any) => {
-    if (!user) {
-      setShowAuth(true);
-      return;
+  const removeFromCart = async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from("cart_items")
+        .delete()
+        .eq("id", itemId);
+
+      if (error) throw error;
+      await fetchCart();
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
     }
-
-    const { data, error } = await supabase
-      .from("cart_items")
-      .insert([{
-        user_id: user.id,
-        reservation_id: reservation.id,
-        quantity: 1,
-        total_price: reservation.price
-      }]);
-
-    if (error) {
-      console.error("Erreur lors de l'ajout au panier:", error);
-      return;
-    }
-
-    // Mettre à jour l'affichage du panier
-    setCartItems([...cartItems, { ...reservation, quantity: 1, total_price: reservation.price }]);
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setCartItems([]); // Vider le panier à la déconnexion
+    setCartItems([]);
+    setTotalPrice(0);
   };
 
   return (
@@ -83,7 +125,6 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Menu desktop */}
         <div className="hidden lg:flex lg:gap-x-12">
           <Link href="/" className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary">
             Accueil
@@ -100,37 +141,82 @@ export default function Header() {
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
-          {/* Panier */}
-          <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+          <Sheet open={isCartOpen} onOpenChange={(open) => {
+            setIsCartOpen(open);
+            if (open && user) fetchCart();
+          }}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-6 w-6" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                    {cartItems.length}
+                  </span>
+                )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="w-[400px] sm:w-[540px]">
               <h2 className="text-2xl font-bold mb-4">Votre Panier</h2>
 
               {cartItems.length === 0 ? (
                 <p className="text-gray-500">Votre panier est vide.</p>
               ) : (
-                cartItems.map((item) => (
-                  <div key={item.id} className="border p-4 rounded-lg mb-4">
-                    <h3 className="text-lg font-bold">{item.reservations.title}</h3>
-                    <p className="text-muted-foreground">{item.reservations.chateau}</p>
-                    <p>Quantité : {item.quantity}</p>
-                    <p className="font-bold">Total : {item.total_price}€</p>
-                  </div>
-                ))
-              )}
+                <div className="space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
+                      <div className="relative w-24 h-24">
+                        {item.reservations?.image && (
+                          <Image
+                            src={item.reservations.image}
+                            alt={item.reservations.title}
+                            fill
+                            className="object-cover rounded-md"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{item.reservations?.title}</h3>
+                        <p className="text-sm text-muted-foreground">{item.reservations?.chateau}</p>
+                        <p className="text-sm">Date: {new Date(item.date).toLocaleDateString('fr-FR')}</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
+                              −
+                            </Button>
+                            <span className="font-medium">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            >
+                              +
+                            </Button>
+                          </div>
+                          <p className="font-semibold">{item.total_price}€</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
 
-              <Button className="mt-4 w-full">
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Finaliser la réservation
-              </Button>
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-semibold">Total</span>
+                      <span className="text-xl font-bold">{totalPrice}€</span>
+                    </div>
+                    <Button className="w-full">
+                      Finaliser la réservation
+                    </Button>
+                  </div>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
 
-          {/* Connexion / Déconnexion */}
           {user ? (
             <Button variant="outline" onClick={handleLogout}>
               <User className="mr-2 h-4 w-4" />
@@ -145,7 +231,6 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* ✅ Pop-up d'authentification */}
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </header>
   );
