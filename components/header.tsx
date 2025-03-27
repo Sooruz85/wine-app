@@ -16,31 +16,6 @@ export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [totalPrice, setTotalPrice] = useState(0);
 
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-
-    const item = cartItems.find((i) => i.id === itemId);
-    if (!item) return;
-
-    const unitPrice = item.total_price / item.quantity;
-    const newTotalPrice = unitPrice * newQuantity;
-
-    try {
-      const { error } = await supabase
-        .from("cart_items")
-        .update({
-          quantity: newQuantity,
-          total_price: newTotalPrice,
-        })
-        .eq("id", itemId);
-
-      if (error) throw error;
-      await fetchCart();
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour :", err);
-    }
-  };
-
   const fetchCart = async () => {
     if (!user) return;
 
@@ -109,7 +84,7 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    supabase.auth.signOut();
     setUser(null);
     setCartItems([]);
     setTotalPrice(0);
@@ -140,7 +115,8 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6">
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+          {/* Bouton Panier */}
           <Sheet open={isCartOpen} onOpenChange={(open) => {
             setIsCartOpen(open);
             if (open && user) fetchCart();
@@ -180,21 +156,8 @@ export default function Header() {
                         <p className="text-sm">Date: {new Date(item.date).toLocaleDateString('fr-FR')}</p>
                         <div className="flex justify-between items-center mt-2">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
-                            >
-                              −
-                            </Button>
-                            <span className="font-medium">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
-                              +
+                            <Button variant="outline" size="icon" onClick={() => removeFromCart(item.id)}>
+                              <Trash2 className="h-5 w-5 text-red-500" />
                             </Button>
                           </div>
                           <p className="font-semibold">{item.total_price}€</p>
@@ -202,21 +165,19 @@ export default function Header() {
                       </div>
                     </div>
                   ))}
-
                   <div className="border-t pt-4 mt-4">
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-semibold">Total</span>
                       <span className="text-xl font-bold">{totalPrice}€</span>
                     </div>
-                    <Button className="w-full">
-                      Finaliser la réservation
-                    </Button>
+                    <Button className="w-full">Finaliser la réservation</Button>
                   </div>
                 </div>
               )}
             </SheetContent>
           </Sheet>
 
+          {/* Bouton Connexion/Déconnexion */}
           {user ? (
             <Button variant="outline" onClick={handleLogout}>
               <User className="mr-2 h-4 w-4" />
@@ -231,6 +192,7 @@ export default function Header() {
         </div>
       </nav>
 
+      {/* Composant Auth pour afficher la pop-up de connexion */}
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </header>
   );
