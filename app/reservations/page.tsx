@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const experiences = [
   {
@@ -180,7 +181,11 @@ export default function Reservations() {
     const matchesSearch = exp.chateau.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          exp.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === "all" || exp.type === selectedType;
-    const matchesLanguage = selectedLanguage === "all" || exp.language.includes(selectedLanguage);
+    const matchesLanguage =
+  selectedLanguage === "all" ||
+  exp.language.some((lang) => lang.toLowerCase().trim() === selectedLanguage.toLowerCase().trim());
+
+
     const matchesPriceRange = priceRange === "all" || (() => {
       switch (priceRange) {
         case "0-200": return exp.price <= 200;
@@ -192,7 +197,9 @@ export default function Reservations() {
 
     return matchesSearch && matchesType && matchesLanguage && matchesPriceRange;
   });
-
+  useEffect(() => {
+    console.log("Expériences filtrées :", filteredExperiences);
+  }, [selectedLanguage]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -324,17 +331,24 @@ export default function Reservations() {
             <SelectItem value="Architecture & Vin">Architecture & Vin</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-          <SelectTrigger><SelectValue placeholder="Langue" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les langues</SelectItem>
-            <SelectItem value="Français">Français</SelectItem>
-            <SelectItem value="English">English</SelectItem>
-            <SelectItem value="Deutsch">Deutsch</SelectItem>
-            <SelectItem value="日本語">日本語</SelectItem>
-            <SelectItem value="中文">中文</SelectItem>
-          </SelectContent>
-        </Select>
+        <Select
+  value={selectedLanguage}
+  onValueChange={(value) => {
+    console.log("Langue sélectionnée :", value);
+    setSelectedLanguage(value);
+  }}
+>
+
+  <SelectTrigger><SelectValue placeholder="Langue" /></SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">Toutes les langues</SelectItem>
+    <SelectItem value="Français">Français</SelectItem>
+    <SelectItem value="English">English</SelectItem>
+    <SelectItem value="Deutsch">Deutsch</SelectItem>
+    <SelectItem value="日本語">日本語</SelectItem>
+    <SelectItem value="中文">中文</SelectItem>
+  </SelectContent>
+</Select>
         <Select value={priceRange} onValueChange={setPriceRange}>
           <SelectTrigger><SelectValue placeholder="Prix" /></SelectTrigger>
           <SelectContent>
